@@ -3,16 +3,16 @@ package ru.practicum.shareit.user;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ConflictException;
+import ru.practicum.shareit.exception.NotFoundException;
 
 import java.util.Collection;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-    private final InMemoryUserStorage userStorage;
+    private final UserStorage userStorage;
 
     @Override
     public UserDto addUser(UserDto dto) {
@@ -28,8 +28,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(Long id, UserDto dto) {
-        User existingUser = userStorage.findUserById(id)
-                .orElseThrow(() -> new NoSuchElementException("Пользователь с ID=" + id + " не найден"));
+        User existingUser = findUserById(id);
 
         User updatedUser = User.builder()
                 .userId(id)
@@ -43,10 +42,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(Long id) {
-        return UserMapper.toUserDto(
-                userStorage.findUserById(id)
-                        .orElseThrow(() -> new NoSuchElementException("Пользователь с ID=" + id + " не найден"))
-        );
+        return UserMapper.toUserDto(findUserById(id));
     }
 
     @Override
@@ -64,5 +60,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteAllUsers() {
         userStorage.deleteAllUsers();
+    }
+
+    private User findUserById(Long id) {
+        return userStorage.findUserById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с ID=" + id + " не найден"));
     }
 }

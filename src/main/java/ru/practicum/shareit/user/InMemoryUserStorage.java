@@ -15,12 +15,9 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User addUser(User user) {
-
-        if (!emails.add(user.getEmail())) {
-            throw new ConflictException("Пользователь с таким email уже существует");
-        }
         user.setUserId(nextId.getAndIncrement());
         users.put(user.getUserId(), user);
+        emails.add(user.getEmail());
         return user;
     }
 
@@ -30,12 +27,15 @@ public class InMemoryUserStorage implements UserStorage {
         if (existingUser == null) {
             throw new NoSuchElementException("Пользователь с ID=" + id + " не найден");
         }
+
         if (!Objects.equals(updateUser.getEmail(), existingUser.getEmail())) {
-            if (!emails.add(updateUser.getEmail())) {
+            if (emails.contains(updateUser.getEmail())) {
                 throw new ConflictException("Пользователь с таким email уже существует");
             }
             emails.remove(existingUser.getEmail());
+            emails.add(updateUser.getEmail());
         }
+
         updateUser.setUserId(id);
         users.put(id, updateUser);
         return updateUser;
@@ -56,12 +56,14 @@ public class InMemoryUserStorage implements UserStorage {
         if (!users.containsKey(id)) {
             throw new NoSuchElementException("Пользователь с ID=" + id + " не найден");
         }
-        users.remove(id);
+        User user = users.remove(id);
+        emails.remove(user.getEmail());
     }
 
     @Override
     public void deleteAllUsers() {
         users.clear();
+        emails.clear();
     }
 
     @Override

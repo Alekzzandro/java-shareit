@@ -11,7 +11,7 @@ public interface ItemService {
 
     ItemDto getItemById(Long itemId);
 
-    Collection<ItemDto> getAllItems(Long userId);
+    Collection<ItemDto> getAllItems(Long userId, int from, int size);
 
     Collection<ItemDto> getItemsByOwnerId(Long ownerId);
 
