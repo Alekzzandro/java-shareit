@@ -56,4 +56,19 @@ public class InMemoryItemStorage implements ItemStorage {
     public void deleteAllItems() {
         items.clear();
     }
+
+    @Override
+    public List<Item> searchItems(String text) {
+        if (text == null || text.isBlank()) {
+            return Collections.emptyList();
+        }
+
+        String lowerCaseText = text.toLowerCase();
+
+        return items.values().stream()
+                .filter(item -> item.getAvailable() &&
+                        (item.getName().toLowerCase().contains(lowerCaseText) ||
+                                item.getDescription().toLowerCase().contains(lowerCaseText)))
+                .collect(Collectors.toList());
+    }
 }

@@ -17,8 +17,8 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler(NoSuchElementException.class)
-    public ErrorResponse handleNoSuchElementException(NoSuchElementException ex) {
+    @ExceptionHandler(NotFoundException.class)
+    public ErrorResponse handleNotFoundException(NotFoundException ex) {
         return new ErrorResponse("Ресурс не найден", ex.getMessage());
     }
 
