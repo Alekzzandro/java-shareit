@@ -3,10 +3,10 @@ package ru.practicum.shareit.booking.dto;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import ru.practicum.shareit.booking.BookingStatus;
-import ru.practicum.shareit.item.dto.ItemShortDto;
-import ru.practicum.shareit.user.UserShortDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -14,9 +14,9 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookingDto {
-
-    private Long id;
+public class BookingCreateDto {
+    @NotNull(message = "Поле 'itemId' не может быть пустым")
+    private Long itemId;
 
     @NotNull(message = "Поле 'start' не может быть пустым")
     @FutureOrPresent(message = "Дата начала должна быть в будущем или настоящем")
@@ -25,14 +25,4 @@ public class BookingDto {
     @NotNull(message = "Поле 'end' не может быть пустым")
     @Future(message = "Дата окончания должна быть в будущем")
     private LocalDateTime end;
-
-    private Long itemId;
-
-    private Long bookerId;
-
-    private BookingStatus status;
-
-    private UserShortDto booker;
-
-    private ItemShortDto item;
 }
