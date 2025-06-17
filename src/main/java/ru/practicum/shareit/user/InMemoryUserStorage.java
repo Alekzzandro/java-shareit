@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import ru.practicum.shareit.exception.ConflictException;
 
@@ -7,6 +8,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Repository
+@Profile("in-memory")
 public class InMemoryUserStorage implements UserStorage {
 
     private final Map<Long, User> users = new HashMap<>();
@@ -15,28 +17,27 @@ public class InMemoryUserStorage implements UserStorage {
 
     @Override
     public User addUser(User user) {
-        user.setUserId(nextId.getAndIncrement());
-        users.put(user.getUserId(), user);
-        emails.add(user.getEmail());
+        if (!emails.add(user.getEmail())) {
+            throw new ConflictException("Пользователь с таким email уже существует");
+        }
+        user.setId(nextId.getAndIncrement());
+        users.put(user.getId(), user);
         return user;
     }
 
     @Override
-    public User updateUser(long id, User updateUser) {
+    public User updateUser(Long id, User updateUser) {
         User existingUser = users.get(id);
         if (existingUser == null) {
             throw new NoSuchElementException("Пользователь с ID=" + id + " не найден");
         }
-
         if (!Objects.equals(updateUser.getEmail(), existingUser.getEmail())) {
-            if (emails.contains(updateUser.getEmail())) {
+            if (!emails.add(updateUser.getEmail())) {
                 throw new ConflictException("Пользователь с таким email уже существует");
             }
             emails.remove(existingUser.getEmail());
-            emails.add(updateUser.getEmail());
         }
-
-        updateUser.setUserId(id);
+        updateUser.setId(id);
         users.put(id, updateUser);
         return updateUser;
     }
@@ -47,23 +48,21 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public Optional<User> findUserById(long id) {
+    public Optional<User> findUserById(Long id) {
         return Optional.ofNullable(users.get(id));
     }
 
     @Override
-    public void deleteUserById(long id) {
+    public void deleteUserById(Long id) {
         if (!users.containsKey(id)) {
             throw new NoSuchElementException("Пользователь с ID=" + id + " не найден");
         }
-        User user = users.remove(id);
-        emails.remove(user.getEmail());
+        users.remove(id);
     }
 
     @Override
     public void deleteAllUsers() {
         users.clear();
-        emails.clear();
     }
 
     @Override

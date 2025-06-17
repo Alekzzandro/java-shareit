@@ -2,11 +2,9 @@ package ru.practicum.shareit.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.exception.ConflictException;
-import ru.practicum.shareit.exception.NotFoundException;
 
 import java.util.Collection;
-import java.util.Objects;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -16,11 +14,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto addUser(UserDto dto) {
-        if (userStorage.getAllUsers().stream()
-                .anyMatch(u -> Objects.equals(u.getEmail(), dto.getEmail()))) {
-            throw new ConflictException("Пользователь с таким email уже существует");
-        }
-
         User user = UserMapper.toUser(dto);
         User savedUser = userStorage.addUser(user);
         return UserMapper.toUserDto(savedUser);
@@ -28,21 +21,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(Long id, UserDto dto) {
-        User existingUser = findUserById(id);
+        User existingUser = userStorage.findUserById(id)
+                .orElseThrow(() -> new NoSuchElementException("Пользователь с ID=" + id + " не найден"));
 
-        User updatedUser = User.builder()
-                .userId(id)
-                .name(dto.getName() != null ? dto.getName() : existingUser.getName())
-                .email(dto.getEmail() != null ? dto.getEmail() : existingUser.getEmail())
-                .build();
+        if (dto.getName() != null) {
+            existingUser.setName(dto.getName());
+        }
+        if (dto.getEmail() != null) {
+            existingUser.setEmail(dto.getEmail());
+        }
 
-        User savedUser = userStorage.updateUser(id, updatedUser);
-        return UserMapper.toUserDto(savedUser);
+        User updatedUser = userStorage.updateUser(id, existingUser);
+        return UserMapper.toUserDto(updatedUser);
     }
 
     @Override
     public UserDto getUserById(Long id) {
-        return UserMapper.toUserDto(findUserById(id));
+        return userStorage.findUserById(id)
+                .map(UserMapper::toUserDto)
+                .orElseThrow(() -> new NoSuchElementException("Пользователь с ID=" + id + " не найден"));
     }
 
     @Override
@@ -60,10 +57,5 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteAllUsers() {
         userStorage.deleteAllUsers();
-    }
-
-    private User findUserById(Long id) {
-        return userStorage.findUserById(id)
-                .orElseThrow(() -> new NotFoundException("Пользователь с ID=" + id + " не найден"));
     }
 }
